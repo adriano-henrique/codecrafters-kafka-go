@@ -72,8 +72,14 @@ func parseMessage(conn net.Conn) ([]byte, []byte, error) {
 	return lengthBytes, headerBytes, nil
 }
 
+func Send(c net.Conn, response []byte) error{
+	binary.Write(c, binary.BigEndian, int32(len(response)))
+	binary.Write(c, binary.BigEndian, response)
+	return nil
+}
+
 func buildResponse(headerBytes []byte, errorCode int16) []byte {
-	response := make([]byte, 17)
+	response := make([]byte, 23)
 	var correlationID = binary.BigEndian.Uint32(headerBytes[4:8])
 	// Building response header
 	binary.BigEndian.PutUint32(response[4:8], correlationID)
@@ -85,6 +91,10 @@ func buildResponse(headerBytes []byte, errorCode int16) []byte {
 	binary.BigEndian.PutUint16(response[11:13], uint16(18))
 	binary.BigEndian.PutUint16(response[13:15], uint16(3))
 	binary.BigEndian.PutUint16(response[15:17], uint16(4))
+	response[17] = 0
+	binary.BigEndian.PutUint32(response[18:22], uint32(0))
+	response[22] = 0
+	binary.BigEndian.PutUint32(response[0:4], uint32(len(response[4:])))
 	return response
 }
 
